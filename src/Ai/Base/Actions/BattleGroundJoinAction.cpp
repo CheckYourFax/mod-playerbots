@@ -231,6 +231,25 @@ bool BGJoinAction::shouldJoinBg(BattlegroundQueueTypeId queueTypeId, Battlegroun
     uint32 BracketSize = bg->GetMaxPlayersPerTeam() * 2;
     uint32 TeamSize = bg->GetMaxPlayersPerTeam();
 
+    // Random battlegrounds use a 10v10 pseudotype only to create the initial instance.
+    // Once a real random BG exists, use its actual free slots instead of the pseudotype size.
+    if (bgTypeId == BATTLEGROUND_RB)
+    {
+        bool hasActiveRandomBg = false;
+        for (Battleground const* activeBg : sBattlegroundMgr->GetActiveBattlegrounds())
+        {
+            if (activeBg->GetBgTypeID() != BATTLEGROUND_RB || activeBg->GetBracketId() != bracketId)
+                continue;
+
+            hasActiveRandomBg = true;
+            if (activeBg->GetFreeSlotsForTeam(teamId) > 0)
+                return true;
+        }
+
+        if (hasActiveRandomBg)
+            return false;
+    }
+
     // If the bot is in a group, only the leader can queue
     if (bot->GetGroup() && !bot->GetGroup()->IsLeader(bot->GetGUID()))
         return false;
@@ -561,6 +580,25 @@ bool FreeBGJoinAction::shouldJoinBg(BattlegroundQueueTypeId queueTypeId, Battleg
 
     uint32 BracketSize = bg->GetMaxPlayersPerTeam() * 2;
     uint32 TeamSize = bg->GetMaxPlayersPerTeam();
+
+    // Random battlegrounds use a 10v10 pseudotype only to create the initial instance.
+    // Once a real random BG exists, use its actual free slots instead of the pseudotype size.
+    if (bgTypeId == BATTLEGROUND_RB)
+    {
+        bool hasActiveRandomBg = false;
+        for (Battleground const* activeBg : sBattlegroundMgr->GetActiveBattlegrounds())
+        {
+            if (activeBg->GetBgTypeID() != BATTLEGROUND_RB || activeBg->GetBracketId() != bracketId)
+                continue;
+
+            hasActiveRandomBg = true;
+            if (activeBg->GetFreeSlotsForTeam(teamId) > 0)
+                return true;
+        }
+
+        if (hasActiveRandomBg)
+            return false;
+    }
 
     // If the bot is in a group, only the leader can queue
     if (bot->GetGroup() && !bot->GetGroup()->IsLeader(bot->GetGUID()))
