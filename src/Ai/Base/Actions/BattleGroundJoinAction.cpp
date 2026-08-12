@@ -236,6 +236,27 @@ bool BGJoinAction::shouldJoinBg(BattlegroundQueueTypeId queueTypeId, Battlegroun
     if (bot->GetGroup() && !bot->GetGroup()->IsLeader(bot->GetGUID()))
         return false;
 
+    // Random BGs use the static 10v10 queue template only until an instance exists.
+    // Once an instance exists, use the real active instance and its free slots.
+    if (bgTypeId == BATTLEGROUND_RB)
+    {
+        bool hasActiveRandomBattleground = false;
+
+        for (Battleground const* activeBg : sBattlegroundMgr->GetActiveBattlegrounds())
+        {
+            if (activeBg->GetBgTypeID() != BATTLEGROUND_RB || activeBg->GetBracketId() != bracketId)
+                continue;
+
+            hasActiveRandomBattleground = true;
+
+            if (activeBg->GetFreeSlotsForTeam(teamId) > 0)
+                return true;
+        }
+
+        if (hasActiveRandomBattleground)
+            return false;
+    }
+
     // Check if bots should join Arena
     ArenaType type = ArenaType(BattlegroundMgr::BGArenaType(queueTypeId));
     if (type != ARENA_TYPE_NONE)
@@ -916,7 +937,7 @@ bool BGStatusAction::Execute(Event event)
                     }
                     context->GetValue<uint32>("bg role")->Set(urand(0, 9));
                     PositionMap& posMap = context->GetValue<PositionMap&>("position")->Get();
-                    PositionInfo pos = context->GetValue<PositionMap&>("position")->Get()["bg objective"];
+                    PositionInfo pos = context->GetAiObjectContext()->GetValue<PositionMap&>("position")->Get()["bg objective"];
                     pos.Reset();
                     posMap["bg objective"] = pos;
 
